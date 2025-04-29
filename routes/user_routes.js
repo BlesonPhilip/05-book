@@ -79,4 +79,71 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//forgot password route
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const key = "zxcfhffnhf";
+    const token = jwt.sign({ user_id: user._id }, key, { expiresIn: "1h" });
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "blessonphilip98@gmail.com",
+        pass: "rtor xboi yvoc suvl",
+      },
+    });
+
+    const mailOptions = {
+      from: "blessonphilip98@gmail.com",
+      to: email,
+      subject: "Reset Password",
+      text: "`Hello friend, ${token}`",
+    };
+
+    transporter.sendMail(mailOptions, () => {
+      return res.status(200).json({
+        message: `
+        Token sent to email`,
+      });
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+// Reset password route
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { password, confirmPassword, token, email } = req.body;
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+    const key = "zxcfhffnhf";
+    const isValid = jwt.verify(token, key);
+    // Hash the new password before storing
+    const hashedPassword = await bcrypt.hash(password, 2);
+    const newUser = await User.findOneAndUpdate(
+      {
+        email: email,
+      },
+      {
+        password: hashedPassword,
+      }
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Password  has been reset successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;
