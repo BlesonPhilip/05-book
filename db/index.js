@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
-
+import dotenv from "dotenv";
+dotenv.config("./.env");
 mongoose
-  .connect("mongodb://localhost:27017/books")
+  .connect(process.env.DB_URL)
   .then(() => {
     console.log("DB Connected");
   })

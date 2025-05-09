@@ -1,6 +1,5 @@
-import express from "express";
+import express, { application } from "express";
 import bcrypt from "bcryptjs"; // Use bcryptjs for ESM projects
-
 import jwt from "jsonwebtoken";
 import User from "../db/models/user_Schema.js"; // Add `.js` if you're using ES modules
 import nodemailer from "nodemailer"; // Import nodemailer for email sending
@@ -102,13 +101,12 @@ router.post("/forgot-password", async (req, res) => {
       from: "blessonphilip98@gmail.com",
       to: email,
       subject: "Reset Password",
-      text: "`Hello friend, ${token}`",
+      text: `Hello , ${token}`,
     };
 
     transporter.sendMail(mailOptions, () => {
       return res.status(200).json({
-        message: `
-        Token sent to email`,
+        message: " Token sent to email",
       });
     });
   } catch (error) {
@@ -120,7 +118,6 @@ router.post("/forgot-password", async (req, res) => {
 router.post("/reset-password", async (req, res) => {
   try {
     const { password, confirmPassword, token, email } = req.body;
-    const decoded = jwt.verify(token, JWT_SECRET);
 
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match" });
@@ -128,7 +125,7 @@ router.post("/reset-password", async (req, res) => {
     const key = "zxcfhffnhf";
     const isValid = jwt.verify(token, key);
     // Hash the new password before storing
-    const hashedPassword = await bcrypt.hash(password, 2);
+    const hashedPassword = await bcrypt.hash(password, 4);
     const newUser = await User.findOneAndUpdate(
       {
         email: email,
@@ -143,6 +140,16 @@ router.post("/reset-password", async (req, res) => {
       .json({ message: "Password  has been reset successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/validate-token", async (req, res) => {
+  try {
+    const { token } = req.body;
+    const isValid = jwt.verify(token, "zxcfhffnhf");
+    return res.status(200).json({ isValid: true });
+  } catch (e) {
+    return res.status(401).json({ isValid: false });
   }
 });
 
